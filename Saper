@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Сапёр</title>
+<style>
+  body { font-family: Arial; text-align: center; background: #222; color: white; }
+  table { margin: auto; border-collapse: collapse; }
+  td {
+    width: 30px; height: 30px;
+    border: 1px solid #555;
+    text-align: center;
+    cursor: pointer;
+    background: #888;
+    font-weight: bold;
+  }
+  td.open { background: #ccc; color: black; cursor: default; }
+  td.mine { background: red; }
+</style>
+</head>
+<body>
+
+<h1>💣 Сапёр</h1>
+<p>ЛКМ — открыть, ПКМ — флаг</p>
+<table id="field"></table>
+<p id="status"></p>
+
+<script>
+const size = 10;
+const minesCount = 15;
+let field = [];
+let opened = [];
+
+function createField() {
+  field = Array.from({length: size}, () => Array(size).fill(0));
+  opened = Array.from({length: size}, () => Array(size).fill(false));
+
+  let placed = 0;
+  while (placed < minesCount) {
+    let x = Math.floor(Math.random() * size);
+    let y = Math.floor(Math.random() * size);
+    if (field[y][x] !== "M") {
+      field[y][x] = "M";
+      placed++;
+    }
+  }
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (field[y][x] === "M") continue;
+      let count = 0;
+      for (let dy = -1; dy <= 1; dy++)
+        for (let dx = -1; dx <= 1; dx++) {
+          let ny = y + dy, nx = x + dx;
+          if (ny >= 0 && ny < size && nx >= 0 && nx < size && field[ny][nx] === "M")
+            count++;
+        }
+      field[y][x] = count;
+    }
+  }
+}
+
+function draw() {
+  const table = document.getElementById("field");
+  table.innerHTML = "";
+  for (let y = 0; y < size; y++) {
+    const row = document.createElement("tr");
+    for (let x = 0; x < size; x++) {
+      const cell = document.createElement("td");
+      cell.oncontextmenu = e => { e.preventDefault(); cell.textContent = "🚩"; };
+      cell.onclick = () => openCell(x, y, cell);
+      row.appendChild(cell);
+    }
+    table.appendChild(row);
+  }
+}
+
+function openCell(x, y, cell) {
+  if (opened[y][x]) return;
+  opened[y][x] = true;
+
+  if (field[y][x] === "M") {
+    cell.className = "mine";
+    cell.textContent = "💣";
+    document.getElementById("status").textContent = "💥 Ты проиграл!";
+    reveal();
+    return;
+  }
+
+  cell.className = "open";
+  if (field[y][x] > 0) {
+    cell.textContent = field[y][x];
+  } else {
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++) {
+        let ny = y + dy, nx = x + dx;
+        if (ny >= 0 && ny < size && nx >= 0 && nx < size)
+          openCell(nx, ny, document.getElementById("field").rows[ny].cells[nx]);
+      }
+  }
+}
+
+function reveal() {
+  const table = document.getElementById("field");
+  for (let y = 0; y < size; y++)
+    for (let x = 0; x < size; x++)
+      if (field[y][x] === "M")
+        table.rows[y].cells[x].textContent = "💣";
+}
+
+createField();
+draw();
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
